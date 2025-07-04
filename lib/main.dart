@@ -321,7 +321,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
                           title: Text(
                             fileName,
                             style: const TextStyle(
-                              fontFamily: 'PixelBoom', // o 'Orbitron'
+                              fontFamily: 'Orbitron', // o 'Orbitron'
                               fontSize: 16,
                               color: Colors.cyanAccent,
                               letterSpacing: 1.5,
