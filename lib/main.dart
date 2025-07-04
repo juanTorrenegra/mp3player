@@ -43,6 +43,10 @@ class MusicListScreen extends StatefulWidget {
 }
 
 class _MusicListScreenState extends State<MusicListScreen> {
+  final ScrollController _scrollController = ScrollController();
+  late Timer _scrollTimer;
+  bool _scrollingForward = true;
+
   List<String> musicFiles = [];
   bool loading = true;
   final player = AudioPlayer();
@@ -66,6 +70,33 @@ class _MusicListScreenState extends State<MusicListScreen> {
       // Si terminó la canción y estamos en modo aleatorio
       if (state.processingState == ProcessingState.completed && isRandomMode) {
         playRandomSong();
+      }
+    });
+    startAutoScroll();
+  }
+
+  void startAutoScroll() {
+    const duration = Duration(milliseconds: 100); // velocidad del scroll
+    const scrollAmount = 1.0; // cantidad de pixeles por paso
+
+    _scrollTimer = Timer.periodic(duration, (timer) {
+      if (_scrollController.hasClients) {
+        final maxScroll = _scrollController.position.maxScrollExtent;
+        final minScroll = _scrollController.position.minScrollExtent;
+        final current = _scrollController.offset;
+
+        double next =
+            current + (_scrollingForward ? scrollAmount : -scrollAmount);
+
+        if (next >= maxScroll) {
+          next = maxScroll;
+          _scrollingForward = false;
+        } else if (next <= minScroll) {
+          next = minScroll;
+          _scrollingForward = true;
+        }
+
+        _scrollController.jumpTo(next);
       }
     });
   }
@@ -152,6 +183,8 @@ class _MusicListScreenState extends State<MusicListScreen> {
 
   @override
   void dispose() {
+    _scrollTimer.cancel();
+    _scrollController.dispose();
     player.dispose();
     super.dispose();
   }
@@ -292,6 +325,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
                 const Divider(),
                 Expanded(
                   child: ListView(
+                    controller: _scrollController,
                     children: musicFiles.map((path) {
                       final fileName = path.split('/').last;
                       return Container(
