@@ -90,5 +90,10 @@ flutter:
   #       - asset: fonts/TrajanPro_Bold.ttf
   #         weight: 700
   #
-  # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/to/font-from-package
+fonts:
+  - family: Orbitron
+    fonts:
+      - asset: assets/fonts/Orbitron-Regular.ttf
+  - family: PixelBoom
+    fonts:
+      - asset: assets/fonts/PixelBoom.ttf
