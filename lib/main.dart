@@ -1,55 +1,73 @@
 import 'dart:math';
+import 'dart:io';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
-import 'dart:async';
 import 'package:just_audio/just_audio.dart';
+import 'package:audio_service/audio_service.dart';
+import 'package:audio_session/audio_session.dart';
 
-import "package:mp3player/app_themes.dart";
+late final AudioHandler _audioHandler;
 
-void main() {
-  runApp(const MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final session = await AudioSession.instance;
+  await session.configure(AudioSessionConfiguration.music());
+
+  final player = AudioPlayer();
+  _audioHandler = await AudioService.init(
+    builder: () => MyAudioHandler(player),
+    config: const AudioServiceConfig(
+      androidNotificationChannelId: 'com.example.mp3player.channel.audio',
+      androidNotificationChannelName: 'Juanelo Music',
+      androidNotificationOngoing: true,
+    ),
+  );
+
+  runApp(MyApp(player: player));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final AudioPlayer player;
+  const MyApp({super.key, required this.player});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
         brightness: Brightness.dark,
-        primaryColor: Color(0xFF00FFCC),
-        secondaryHeaderColor: Color(0xFF4444FF),
+        primaryColor: const Color(0xFF00FFCC),
+        secondaryHeaderColor: const Color(0xFF4444FF),
         fontFamily: 'Orbitron',
-
-        textTheme: TextTheme(
+        textTheme: const TextTheme(
           bodyLarge: TextStyle(fontFamily: 'Orbitron'),
           bodyMedium: TextStyle(fontFamily: 'Orbitron'),
         ),
       ),
-      home: MusicListScreen(),
+      home: MusicListScreen(player: player),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
 class MusicListScreen extends StatefulWidget {
-  const MusicListScreen({super.key});
+  final AudioPlayer player;
+  const MusicListScreen({super.key, required this.player});
 
   @override
   State<MusicListScreen> createState() => _MusicListScreenState();
 }
 
 class _MusicListScreenState extends State<MusicListScreen> {
+  Duration _currentPosition = Duration.zero;
+  Duration _totalDuration = Duration.zero;
   List<String> musicFiles = [];
   bool loading = true;
-  final player = AudioPlayer();
 
   String? currentlyPlaying;
   bool isPlaying = false;
-
   bool isRandomMode = false;
   final Random _random = Random();
 
@@ -58,29 +76,22 @@ class _MusicListScreenState extends State<MusicListScreen> {
     super.initState();
     requestPermissionAndListFiles();
 
-    player.playerStateStream.listen((state) {
-      setState(() {
-        isPlaying = state.playing;
-      });
-
-      // Si terminó la canción y estamos en modo aleatorio
+    widget.player.playerStateStream.listen((state) {
+      setState(() => isPlaying = state.playing);
       if (state.processingState == ProcessingState.completed && isRandomMode) {
         playRandomSong();
       }
     });
-  }
 
-  void playRandomSong() {
-    if (musicFiles.isEmpty) return;
+    widget.player.positionStream.listen(
+      (position) => setState(() => _currentPosition = position),
+    );
 
-    final randomIndex = _random.nextInt(musicFiles.length);
-    final randomPath = musicFiles[randomIndex];
-    playMusic(randomPath);
-  }
-
-  void startRandomMode() {
-    isRandomMode = true;
-    playRandomSong();
+    widget.player.durationStream.listen((duration) {
+      if (duration != null) {
+        setState(() => _totalDuration = duration);
+      }
+    });
   }
 
   Future<void> requestPermissionAndListFiles() async {
@@ -88,9 +99,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
     if (status.isGranted) {
       listMusicFiles();
     } else {
-      setState(() {
-        loading = false;
-      });
+      setState(() => loading = false);
     }
   }
 
@@ -105,31 +114,30 @@ class _MusicListScreenState extends State<MusicListScreen> {
           .map((file) => file.path)
           .toList();
 
-      print("Archivos encontrados: ${mp3Files.length}");
-
       setState(() {
         musicFiles = mp3Files;
         loading = false;
       });
     } else {
-      print("Directorio no existe");
-      setState(() {
-        loading = false;
-      });
+      setState(() => loading = false);
     }
   }
 
   void playMusic(String path) async {
     try {
-      await player.setFilePath(path);
-      await player.play();
+      await widget.player.setFilePath(path);
+      await widget.player.play();
 
-      // Esperamos a que el audio realmente esté en estado playing
-      player.playerStateStream.firstWhere((state) => state.playing).then((_) {
-        setState(() {
-          currentlyPlaying = path.split('/').last;
-        });
-      });
+      _audioHandler.play();
+      _audioHandler.updateMediaItem(
+        MediaItem(
+          id: path,
+          album: "Juanelo Player",
+          title: path.split("/").last,
+        ),
+      );
+
+      setState(() => currentlyPlaying = path.split('/').last);
     } catch (e) {
       print("Error al reproducir el archivo: $e");
     }
@@ -137,22 +145,29 @@ class _MusicListScreenState extends State<MusicListScreen> {
 
   void pauseMusic() async {
     isRandomMode = false;
-    await player.pause();
-    setState(() {
-      isPlaying = false;
-    });
+    await widget.player.pause();
+    _audioHandler.pause();
   }
 
   void resumeMusic() async {
-    await player.play();
-    setState(() {
-      isPlaying = true;
-    });
+    await widget.player.play();
+    _audioHandler.play();
+  }
+
+  void playRandomSong() {
+    if (musicFiles.isEmpty) return;
+    final randomIndex = _random.nextInt(musicFiles.length);
+    playMusic(musicFiles[randomIndex]);
+  }
+
+  void startRandomMode() {
+    isRandomMode = true;
+    playRandomSong();
   }
 
   @override
   void dispose() {
-    player.dispose();
+    widget.player.dispose();
     super.dispose();
   }
 
@@ -169,119 +184,59 @@ class _MusicListScreenState extends State<MusicListScreen> {
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).secondaryHeaderColor.withValues(alpha: .1),
+                    color: Theme.of(context).secondaryHeaderColor.withAlpha(20),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                        currentlyPlaying != null
-                            ? currentlyPlaying!
-                            : 'No hay canción en reproducción',
+                        currentlyPlaying ?? 'No hay canción en reproducción',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'PixelBoom',
+                          fontFamily: 'Orbitron',
                           fontSize: 22,
                           color: Theme.of(context).primaryColor,
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      if (currentlyPlaying != null)
+                        Slider(
+                          value: _currentPosition.inMilliseconds.toDouble(),
+                          max: _totalDuration.inMilliseconds.toDouble(),
+                          onChanged: (value) {
+                            widget.player.seek(
+                              Duration(milliseconds: value.toInt()),
+                            );
+                          },
+                          activeColor: Colors.cyanAccent,
+                          inactiveColor: Colors.grey.shade700,
+                        ),
                       const SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          ElevatedButton(
-                            onPressed: isPlaying ? pauseMusic : null,
-                            style:
-                                ElevatedButton.styleFrom(
-                                  shape: const CircleBorder(),
-                                  padding: const EdgeInsets.all(24),
-                                  backgroundColor: Colors.black,
-                                  shadowColor: Colors.cyanAccent,
-                                  elevation: 12,
-                                ).copyWith(
-                                  overlayColor: MaterialStateProperty.all(
-                                    Colors.cyan.withOpacity(0.2),
-                                  ),
-                                ),
-                            child: const Icon(
-                              Icons.pause,
-                              size: 36,
-                              color: Colors.cyanAccent,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.cyan,
-                                  blurRadius: 10,
-                                  offset: Offset(0, 0),
-                                ),
-                              ],
-                            ),
+                          controlButton(
+                            Icons.pause,
+                            pauseMusic,
+                            Colors.cyanAccent,
                           ),
                           const SizedBox(width: 20),
-                          ElevatedButton(
-                            onPressed: !isPlaying && currentlyPlaying != null
-                                ? resumeMusic
-                                : null,
-                            style:
-                                ElevatedButton.styleFrom(
-                                  shape: const CircleBorder(),
-                                  padding: const EdgeInsets.all(24),
-                                  backgroundColor: Colors.black,
-                                  shadowColor: Colors.greenAccent,
-                                  elevation: 12,
-                                ).copyWith(
-                                  overlayColor: MaterialStateProperty.all(
-                                    Colors.green.withOpacity(0.2),
-                                  ),
-                                ),
-                            child: const Icon(
-                              Icons.play_arrow,
-                              size: 36,
-                              color: Colors.greenAccent,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.green,
-                                  blurRadius: 10,
-                                  offset: Offset(0, 0),
-                                ),
-                              ],
-                            ),
+                          controlButton(
+                            Icons.play_arrow,
+                            resumeMusic,
+                            Colors.greenAccent,
                           ),
                           const SizedBox(width: 20),
-                          ElevatedButton(
-                            onPressed: startRandomMode,
-                            style:
-                                ElevatedButton.styleFrom(
-                                  shape: const CircleBorder(),
-                                  padding: const EdgeInsets.all(24),
-                                  backgroundColor: Colors.black,
-                                  shadowColor: Colors.purpleAccent,
-                                  elevation: 12,
-                                ).copyWith(
-                                  overlayColor: MaterialStateProperty.all(
-                                    Colors.purple.withOpacity(0.2),
-                                  ),
-                                ),
-                            child: const Icon(
-                              Icons.shuffle,
-                              size: 36,
-                              color: Colors.purpleAccent,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.purple,
-                                  blurRadius: 10,
-                                  offset: Offset(0, 0),
-                                ),
-                              ],
-                            ),
+                          controlButton(
+                            Icons.shuffle,
+                            startRandomMode,
+                            Colors.purpleAccent,
                           ),
                         ],
                       ),
@@ -300,17 +255,15 @@ class _MusicListScreenState extends State<MusicListScreen> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF0A0F1C,
-                          ), // fondo oscuro tipo sci-fi
+                          color: const Color(0xFF0A0F1C),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.cyanAccent, // borde neón
+                            color: Colors.cyanAccent,
                             width: 1.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.cyanAccent.withValues(alpha: .3),
+                              color: Colors.cyanAccent.withAlpha(100),
                               blurRadius: 8,
                               spreadRadius: 2,
                               offset: const Offset(0, 0),
@@ -321,7 +274,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
                           title: Text(
                             fileName,
                             style: const TextStyle(
-                              fontFamily: 'PixelBoom', // o 'Orbitron'
+                              fontFamily: 'PixelBoom',
                               fontSize: 16,
                               color: Colors.cyanAccent,
                               letterSpacing: 1.5,
@@ -347,5 +300,66 @@ class _MusicListScreenState extends State<MusicListScreen> {
               ],
             ),
     );
+  }
+
+  Widget controlButton(IconData icon, VoidCallback onPressed, Color color) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style:
+          ElevatedButton.styleFrom(
+            shape: const CircleBorder(),
+            padding: const EdgeInsets.all(24),
+            backgroundColor: Colors.black,
+            shadowColor: color,
+            elevation: 12,
+          ).copyWith(
+            overlayColor: MaterialStateProperty.all(color.withOpacity(0.2)),
+          ),
+      child: Icon(
+        icon,
+        size: 36,
+        color: color,
+        shadows: [Shadow(color: color, blurRadius: 10)],
+      ),
+    );
+  }
+}
+
+class MyAudioHandler extends BaseAudioHandler {
+  final AudioPlayer _player;
+
+  MyAudioHandler(this._player) {
+    _player.playerStateStream.listen((state) {
+      playbackState.add(
+        playbackState.value.copyWith(
+          controls: [MediaControl.pause, MediaControl.play, MediaControl.stop],
+          playing: state.playing,
+          processingState: const {
+            ProcessingState.idle: AudioProcessingState.idle,
+            ProcessingState.loading: AudioProcessingState.connecting,
+            ProcessingState.buffering: AudioProcessingState.buffering,
+            ProcessingState.ready: AudioProcessingState.ready,
+            ProcessingState.completed: AudioProcessingState.completed,
+          }[state.processingState]!,
+        ),
+      );
+    });
+  }
+
+  @override
+  Future<void> play() => _player.play();
+
+  @override
+  Future<void> pause() => _player.pause();
+
+  @override
+  Future<void> stop() => _player.stop();
+
+  @override
+  Future<void> seek(Duration position) => _player.seek(position);
+
+  @override
+  Future<void> updateMediaItem(MediaItem mediaItem) async {
+    mediaItem.add(mediaItem);
   }
 }
