@@ -1,11 +1,9 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:async';
 import 'package:just_audio/just_audio.dart';
-
 import "package:mp3player/app_themes.dart";
 
 void main() {
@@ -23,7 +21,6 @@ class MyApp extends StatelessWidget {
         primaryColor: Color(0xFF00FFCC),
         secondaryHeaderColor: Color(0xFF4444FF),
         fontFamily: 'Orbitron',
-
         textTheme: TextTheme(
           bodyLarge: TextStyle(fontFamily: 'Orbitron'),
           bodyMedium: TextStyle(fontFamily: 'Orbitron'),
@@ -46,6 +43,8 @@ class _MusicListScreenState extends State<MusicListScreen> {
   final ScrollController _scrollController = ScrollController();
   late Timer _scrollTimer;
   bool _scrollingForward = true;
+  Timer? _userInteractionTimer;
+  bool _autoScrollEnabled = true;
 
   List<String> musicFiles = [];
   bool loading = true;
@@ -67,7 +66,6 @@ class _MusicListScreenState extends State<MusicListScreen> {
         isPlaying = state.playing;
       });
 
-      // Si terminó la canción y estamos en modo aleatorio
       if (state.processingState == ProcessingState.completed && isRandomMode) {
         playRandomSong();
       }
@@ -76,11 +74,11 @@ class _MusicListScreenState extends State<MusicListScreen> {
   }
 
   void startAutoScroll() {
-    const duration = Duration(milliseconds: 100); // velocidad del scroll
-    const scrollAmount = 1.0; // cantidad de pixeles por paso
+    const duration = Duration(milliseconds: 100);
+    const scrollAmount = 1.0;
 
     _scrollTimer = Timer.periodic(duration, (timer) {
-      if (_scrollController.hasClients) {
+      if (_scrollController.hasClients && _autoScrollEnabled) {
         final maxScroll = _scrollController.position.maxScrollExtent;
         final minScroll = _scrollController.position.minScrollExtent;
         final current = _scrollController.offset;
@@ -101,9 +99,20 @@ class _MusicListScreenState extends State<MusicListScreen> {
     });
   }
 
+  void onUserInteraction() {
+    setState(() {
+      _autoScrollEnabled = false;
+    });
+    _userInteractionTimer?.cancel();
+    _userInteractionTimer = Timer(const Duration(seconds: 10), () {
+      setState(() {
+        _autoScrollEnabled = true;
+      });
+    });
+  }
+
   void playRandomSong() {
     if (musicFiles.isEmpty) return;
-
     final randomIndex = _random.nextInt(musicFiles.length);
     final randomPath = musicFiles[randomIndex];
     playMusic(randomPath);
@@ -136,7 +145,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
           .map((file) => file.path)
           .toList();
 
-      print("Archivos encontrados: ${mp3Files.length}");
+      print("Archivos encontrados: \${mp3Files.length}");
 
       setState(() {
         musicFiles = mp3Files;
@@ -154,15 +163,13 @@ class _MusicListScreenState extends State<MusicListScreen> {
     try {
       await player.setFilePath(path);
       await player.play();
-
-      // Esperamos a que el audio realmente esté en estado playing
       player.playerStateStream.firstWhere((state) => state.playing).then((_) {
         setState(() {
           currentlyPlaying = path.split('/').last;
         });
       });
     } catch (e) {
-      print("Error al reproducir el archivo: $e");
+      print("Error al reproducir el archivo: \$e");
     }
   }
 
@@ -184,6 +191,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
   @override
   void dispose() {
     _scrollTimer.cancel();
+    _userInteractionTimer?.cancel();
     _scrollController.dispose();
     player.dispose();
     super.dispose();
@@ -191,195 +199,203 @@ class _MusicListScreenState extends State<MusicListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text(
-          "Juanelo's Music",
-          style: TextStyle(fontFamily: "cursive"),
+    return GestureDetector(
+      onTap: onUserInteraction,
+      onPanDown: (_) => onUserInteraction(),
+      child: Scaffold(
+        appBar: AppBar(
+          centerTitle: true,
+          title: const Text(
+            "Juanelo's Music",
+            style: TextStyle(fontFamily: "cursive"),
+          ),
         ),
-      ),
-      body: loading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).secondaryHeaderColor.withValues(alpha: .1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        currentlyPlaying != null
-                            ? currentlyPlaying!
-                            : 'No hay canción en reproducción',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: 'PixelBoom',
-                          fontSize: 22,
-                          color: Theme.of(context).primaryColor,
+        body: loading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).secondaryHeaderColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          currentlyPlaying != null
+                              ? currentlyPlaying!
+                              : 'No hay canción en reproducción',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'PixelBoom',
+                            fontSize: 22,
+                            color: Theme.of(context).primaryColor,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ElevatedButton(
-                            onPressed: isPlaying ? pauseMusic : null,
-                            style:
-                                ElevatedButton.styleFrom(
-                                  shape: const CircleBorder(),
-                                  padding: const EdgeInsets.all(24),
-                                  backgroundColor: Colors.black,
-                                  shadowColor: Colors.cyanAccent,
-                                  elevation: 12,
-                                ).copyWith(
-                                  overlayColor: MaterialStateProperty.all(
-                                    Colors.cyan.withOpacity(0.2),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              onPressed: isPlaying ? pauseMusic : null,
+                              style:
+                                  ElevatedButton.styleFrom(
+                                    shape: const CircleBorder(),
+                                    padding: const EdgeInsets.all(24),
+                                    backgroundColor: Colors.black,
+                                    shadowColor: Colors.cyanAccent,
+                                    elevation: 12,
+                                  ).copyWith(
+                                    overlayColor: MaterialStateProperty.all(
+                                      Colors.cyan.withOpacity(0.2),
+                                    ),
                                   ),
-                                ),
-                            child: const Icon(
-                              Icons.pause,
-                              size: 36,
-                              color: Colors.cyanAccent,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.cyan,
-                                  blurRadius: 10,
-                                  offset: Offset(0, 0),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 20),
-                          ElevatedButton(
-                            onPressed: !isPlaying && currentlyPlaying != null
-                                ? resumeMusic
-                                : null,
-                            style:
-                                ElevatedButton.styleFrom(
-                                  shape: const CircleBorder(),
-                                  padding: const EdgeInsets.all(24),
-                                  backgroundColor: Colors.black,
-                                  shadowColor: Colors.greenAccent,
-                                  elevation: 12,
-                                ).copyWith(
-                                  overlayColor: MaterialStateProperty.all(
-                                    Colors.green.withOpacity(0.2),
+                              child: const Icon(
+                                Icons.pause,
+                                size: 36,
+                                color: Colors.cyanAccent,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.cyan,
+                                    blurRadius: 10,
+                                    offset: Offset(0, 0),
                                   ),
-                                ),
-                            child: const Icon(
-                              Icons.play_arrow,
-                              size: 36,
-                              color: Colors.greenAccent,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.green,
-                                  blurRadius: 10,
-                                  offset: Offset(0, 0),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 20),
-                          ElevatedButton(
-                            onPressed: startRandomMode,
-                            style:
-                                ElevatedButton.styleFrom(
-                                  shape: const CircleBorder(),
-                                  padding: const EdgeInsets.all(24),
-                                  backgroundColor: Colors.black,
-                                  shadowColor: Colors.purpleAccent,
-                                  elevation: 12,
-                                ).copyWith(
-                                  overlayColor: MaterialStateProperty.all(
-                                    Colors.purple.withOpacity(0.2),
+                            const SizedBox(width: 20),
+                            ElevatedButton(
+                              onPressed: !isPlaying && currentlyPlaying != null
+                                  ? resumeMusic
+                                  : null,
+                              style:
+                                  ElevatedButton.styleFrom(
+                                    shape: const CircleBorder(),
+                                    padding: const EdgeInsets.all(24),
+                                    backgroundColor: Colors.black,
+                                    shadowColor: Colors.greenAccent,
+                                    elevation: 12,
+                                  ).copyWith(
+                                    overlayColor: MaterialStateProperty.all(
+                                      Colors.green.withOpacity(0.2),
+                                    ),
                                   ),
-                                ),
-                            child: const Icon(
-                              Icons.shuffle,
-                              size: 36,
-                              color: Colors.purpleAccent,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.purple,
-                                  blurRadius: 10,
-                                  offset: Offset(0, 0),
-                                ),
-                              ],
+                              child: const Icon(
+                                Icons.play_arrow,
+                                size: 36,
+                                color: Colors.greenAccent,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.green,
+                                    blurRadius: 10,
+                                    offset: Offset(0, 0),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Divider(),
-                Expanded(
-                  child: ListView(
-                    controller: _scrollController,
-                    children: musicFiles.map((path) {
-                      final fileName = path.split('/').last;
-                      return Container(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF0A0F1C,
-                          ), // fondo oscuro tipo sci-fi
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.cyanAccent, // borde neón
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.cyanAccent.withValues(alpha: .3),
-                              blurRadius: 8,
-                              spreadRadius: 2,
-                              offset: const Offset(0, 0),
+                            const SizedBox(width: 20),
+                            ElevatedButton(
+                              onPressed: startRandomMode,
+                              style:
+                                  ElevatedButton.styleFrom(
+                                    shape: const CircleBorder(),
+                                    padding: const EdgeInsets.all(24),
+                                    backgroundColor: Colors.black,
+                                    shadowColor: Colors.purpleAccent,
+                                    elevation: 12,
+                                  ).copyWith(
+                                    overlayColor: MaterialStateProperty.all(
+                                      Colors.purple.withOpacity(0.2),
+                                    ),
+                                  ),
+                              child: const Icon(
+                                Icons.shuffle,
+                                size: 36,
+                                color: Colors.purpleAccent,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.purple,
+                                    blurRadius: 10,
+                                    offset: Offset(0, 0),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
-                        child: ListTile(
-                          title: Text(
-                            fileName,
-                            style: const TextStyle(
-                              fontFamily: 'Orbitron', // o 'Orbitron'
-                              fontSize: 16,
-                              color: Colors.cyanAccent,
-                              letterSpacing: 1.5,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.cyan,
-                                  blurRadius: 4,
-                                  offset: Offset(0, 0),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  Expanded(
+                    child: ListView(
+                      controller: _scrollController,
+                      children: musicFiles.map((path) {
+                        final fileName = path.split('/').last;
+                        return GestureDetector(
+                          onTap: onUserInteraction,
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0A0F1C),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.cyanAccent,
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.cyanAccent.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  spreadRadius: 2,
+                                  offset: const Offset(0, 0),
                                 ),
                               ],
                             ),
+                            child: ListTile(
+                              title: Text(
+                                fileName,
+                                style: const TextStyle(
+                                  fontFamily: 'Orbitron',
+                                  fontSize: 16,
+                                  color: Colors.cyanAccent,
+                                  letterSpacing: 1.5,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.cyan,
+                                      blurRadius: 4,
+                                      offset: Offset(0, 0),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              onTap: () {
+                                onUserInteraction();
+                                playMusic(path);
+                              },
+                              trailing: const Icon(
+                                Icons.play_arrow,
+                                color: Colors.cyanAccent,
+                              ),
+                            ),
                           ),
-                          onTap: () => playMusic(path),
-                          trailing: const Icon(
-                            Icons.play_arrow,
-                            color: Colors.cyanAccent,
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                        );
+                      }).toList(),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+      ),
     );
   }
 }
