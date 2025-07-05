@@ -51,6 +51,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
   final player = AudioPlayer();
 
   String? currentlyPlaying;
+  String? previousSong;
   bool isPlaying = false;
 
   bool isRandomMode = false;
@@ -118,6 +119,18 @@ class _MusicListScreenState extends State<MusicListScreen> {
     playMusic(randomPath);
   }
 
+  void playNextRandom() {
+    playRandomSong();
+  }
+
+  void playPreviousSong() {
+    if (previousSong != null) {
+      final previous = previousSong;
+      previousSong = null; // se borra después de usarla
+      playMusic(previous!);
+    }
+  }
+
   void startRandomMode() {
     isRandomMode = true;
     playRandomSong();
@@ -161,6 +174,14 @@ class _MusicListScreenState extends State<MusicListScreen> {
 
   void playMusic(String path) async {
     try {
+      if (currentlyPlaying != null &&
+          currentlyPlaying != path.split('/').last) {
+        previousSong = musicFiles.firstWhere(
+          (p) => p.endsWith(currentlyPlaying!),
+          orElse: () => '',
+        );
+      }
+
       await player.setFilePath(path);
       await player.play();
       player.playerStateStream.firstWhere((state) => state.playing).then((_) {
@@ -325,6 +346,61 @@ class _MusicListScreenState extends State<MusicListScreen> {
                                     offset: Offset(0, 0),
                                   ),
                                 ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              onPressed: playPreviousSong,
+                              style:
+                                  ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 10,
+                                    ),
+                                    backgroundColor: Colors.black,
+                                    elevation: 6,
+                                    shadowColor: Colors.blueAccent,
+                                  ).copyWith(
+                                    overlayColor: MaterialStateProperty.all(
+                                      Colors.blue.withOpacity(0.2),
+                                    ),
+                                  ),
+                              child: const Icon(
+                                Icons.fast_rewind,
+                                color: Colors.blueAccent,
+                              ),
+                            ),
+                            const SizedBox(width: 20),
+                            ElevatedButton(
+                              onPressed: playNextRandom,
+                              style:
+                                  ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 10,
+                                    ),
+                                    backgroundColor: Colors.black,
+                                    elevation: 6,
+                                    shadowColor: Colors.orangeAccent,
+                                  ).copyWith(
+                                    overlayColor: MaterialStateProperty.all(
+                                      Colors.orange.withOpacity(0.2),
+                                    ),
+                                  ),
+                              child: const Icon(
+                                Icons.fast_forward,
+                                color: Colors.orangeAccent,
                               ),
                             ),
                           ],
