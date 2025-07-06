@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:async';
 import 'package:just_audio/just_audio.dart';
-import "package:mp3player/app_themes.dart";
+import 'Vending_machine_frame.dart';
 
 void main() {
   runApp(const MyApp());
@@ -57,6 +57,9 @@ class _MusicListScreenState extends State<MusicListScreen> {
   bool isRandomMode = false;
   final Random _random = Random();
 
+  Duration currentPosition = Duration.zero;
+  Duration totalDuration = Duration.zero;
+
   @override
   void initState() {
     super.initState();
@@ -71,6 +74,21 @@ class _MusicListScreenState extends State<MusicListScreen> {
         playRandomSong();
       }
     });
+
+    player.durationStream.listen((duration) {
+      if (duration != null) {
+        setState(() {
+          totalDuration = duration;
+        });
+      }
+    });
+
+    player.positionStream.listen((position) {
+      setState(() {
+        currentPosition = position;
+      });
+    });
+
     startAutoScroll();
   }
 
@@ -125,9 +143,9 @@ class _MusicListScreenState extends State<MusicListScreen> {
 
   void playPreviousSong() {
     if (previousSong != null) {
-      final previous = previousSong;
-      previousSong = null; // se borra después de usarla
-      playMusic(previous!);
+      final song = previousSong;
+      previousSong = null;
+      playMusic(song!);
     }
   }
 
@@ -209,6 +227,13 @@ class _MusicListScreenState extends State<MusicListScreen> {
     });
   }
 
+  String formatDuration(Duration d) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(d.inMinutes.remainder(60));
+    final seconds = twoDigits(d.inSeconds.remainder(60));
+    return "$minutes:$seconds";
+  }
+
   @override
   void dispose() {
     _scrollTimer.cancel();
@@ -228,7 +253,19 @@ class _MusicListScreenState extends State<MusicListScreen> {
           centerTitle: true,
           title: const Text(
             "Juanelo's Music",
-            style: TextStyle(fontFamily: "cursive"),
+            style: TextStyle(
+              fontFamily: "cursive",
+              color: Colors.cyanAccent,
+              letterSpacing: 3,
+              fontSize: 15,
+              shadows: [
+                Shadow(
+                  color: Colors.cyan,
+                  blurRadius: 30,
+                  offset: Offset(0, 0),
+                ),
+              ],
+            ),
           ),
         ),
         body: loading
@@ -236,180 +273,234 @@ class _MusicListScreenState extends State<MusicListScreen> {
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Theme.of(
-                        context,
-                      ).secondaryHeaderColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          currentlyPlaying != null
-                              ? currentlyPlaying!
-                              : 'No hay canción en reproducción',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'PixelBoom',
-                            fontSize: 22,
-                            color: Theme.of(context).primaryColor,
+                  VendingMachineFrame(
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).secondaryHeaderColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            currentlyPlaying != null
+                                ? currentlyPlaying!
+                                : 'No hay canción en reproducción',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: 'PixelBoom',
+                              fontSize: 17,
+                              //fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ElevatedButton(
-                              onPressed: isPlaying ? pauseMusic : null,
-                              style:
-                                  ElevatedButton.styleFrom(
-                                    shape: const CircleBorder(),
-                                    padding: const EdgeInsets.all(24),
-                                    backgroundColor: Colors.black,
-                                    shadowColor: Colors.cyanAccent,
-                                    elevation: 12,
-                                  ).copyWith(
-                                    overlayColor: MaterialStateProperty.all(
-                                      Colors.cyan.withOpacity(0.2),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              const SizedBox(width: 10),
+                              Text(
+                                formatDuration(currentPosition),
+                                style: const TextStyle(
+                                  color: Colors.cyanAccent,
+                                  fontSize: 12,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.white,
+                                      blurRadius: 6,
+                                      offset: Offset(0, 0),
                                     ),
-                                  ),
-                              child: const Icon(
-                                Icons.pause,
-                                size: 36,
-                                color: Colors.cyanAccent,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.cyan,
-                                    blurRadius: 10,
-                                    offset: Offset(0, 0),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 20),
-                            ElevatedButton(
-                              onPressed: !isPlaying && currentlyPlaying != null
-                                  ? resumeMusic
-                                  : null,
-                              style:
-                                  ElevatedButton.styleFrom(
-                                    shape: const CircleBorder(),
-                                    padding: const EdgeInsets.all(24),
-                                    backgroundColor: Colors.black,
-                                    shadowColor: Colors.greenAccent,
-                                    elevation: 12,
-                                  ).copyWith(
-                                    overlayColor: MaterialStateProperty.all(
-                                      Colors.green.withOpacity(0.2),
-                                    ),
-                                  ),
-                              child: const Icon(
-                                Icons.play_arrow,
-                                size: 36,
-                                color: Colors.greenAccent,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.green,
-                                    blurRadius: 10,
-                                    offset: Offset(0, 0),
-                                  ),
-                                ],
+                              const SizedBox(width: 2),
+                              Expanded(
+                                child: Slider(
+                                  value: currentPosition.inSeconds.toDouble(),
+                                  max: totalDuration.inSeconds.toDouble(),
+                                  onChanged: (value) async {
+                                    final position = Duration(
+                                      seconds: value.toInt(),
+                                    );
+                                    await player.seek(position);
+                                  },
+                                  activeColor: Colors.purple,
+                                  inactiveColor: Colors.purple.withOpacity(0.3),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 20),
-                            ElevatedButton(
-                              onPressed: startRandomMode,
-                              style:
-                                  ElevatedButton.styleFrom(
-                                    shape: const CircleBorder(),
-                                    padding: const EdgeInsets.all(24),
-                                    backgroundColor: Colors.black,
-                                    shadowColor: Colors.purpleAccent,
-                                    elevation: 12,
-                                  ).copyWith(
-                                    overlayColor: MaterialStateProperty.all(
-                                      Colors.purple.withOpacity(0.2),
+                              const SizedBox(width: 1),
+                              Text(
+                                formatDuration(totalDuration),
+                                style: const TextStyle(
+                                  color: Colors.cyanAccent,
+                                  fontSize: 12,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.cyan,
+                                      blurRadius: 6,
+                                      offset: Offset(0, 0),
                                     ),
-                                  ),
-                              child: const Icon(
-                                Icons.shuffle,
-                                size: 36,
-                                color: Colors.purpleAccent,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.purple,
-                                    blurRadius: 10,
-                                    offset: Offset(0, 0),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ElevatedButton(
-                              onPressed: playPreviousSong,
-                              style:
-                                  ElevatedButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                              const SizedBox(width: 10),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ElevatedButton(
+                                onPressed: isPlaying ? pauseMusic : null,
+                                style:
+                                    ElevatedButton.styleFrom(
+                                      shape: const CircleBorder(),
+                                      padding: const EdgeInsets.all(24),
+                                      backgroundColor: Colors.black,
+                                      shadowColor: Colors.cyanAccent,
+                                      elevation: 12,
+                                    ).copyWith(
+                                      overlayColor: MaterialStateProperty.all(
+                                        Colors.cyan.withOpacity(0.2),
+                                      ),
                                     ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 10,
+                                child: const Icon(
+                                  Icons.pause,
+                                  size: 36,
+                                  color: Colors.cyanAccent,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.cyan,
+                                      blurRadius: 10,
+                                      offset: Offset(0, 0),
                                     ),
-                                    backgroundColor: Colors.black,
-                                    elevation: 6,
-                                    shadowColor: Colors.blueAccent,
-                                  ).copyWith(
-                                    overlayColor: MaterialStateProperty.all(
-                                      Colors.blue.withOpacity(0.2),
-                                    ),
-                                  ),
-                              child: const Icon(
-                                Icons.fast_rewind,
-                                color: Colors.blueAccent,
+                                  ],
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 20),
-                            ElevatedButton(
-                              onPressed: playNextRandom,
-                              style:
-                                  ElevatedButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                              const SizedBox(width: 20),
+                              ElevatedButton(
+                                onPressed:
+                                    !isPlaying && currentlyPlaying != null
+                                    ? resumeMusic
+                                    : null,
+                                style:
+                                    ElevatedButton.styleFrom(
+                                      shape: const CircleBorder(),
+                                      padding: const EdgeInsets.all(24),
+                                      backgroundColor: Colors.black,
+                                      shadowColor: Colors.greenAccent,
+                                      elevation: 12,
+                                    ).copyWith(
+                                      overlayColor: MaterialStateProperty.all(
+                                        Colors.green.withValues(alpha: .2),
+                                      ),
                                     ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 10,
+                                child: const Icon(
+                                  Icons.play_arrow,
+                                  size: 36,
+                                  color: Colors.greenAccent,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.green,
+                                      blurRadius: 10,
+                                      offset: Offset(0, 0),
                                     ),
-                                    backgroundColor: Colors.black,
-                                    elevation: 6,
-                                    shadowColor: Colors.orangeAccent,
-                                  ).copyWith(
-                                    overlayColor: MaterialStateProperty.all(
-                                      Colors.orange.withOpacity(0.2),
-                                    ),
-                                  ),
-                              child: const Icon(
-                                Icons.fast_forward,
-                                color: Colors.orangeAccent,
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                              const SizedBox(width: 20),
+                              ElevatedButton(
+                                onPressed: startRandomMode,
+                                style:
+                                    ElevatedButton.styleFrom(
+                                      shape: const CircleBorder(),
+                                      padding: const EdgeInsets.all(24),
+                                      backgroundColor: Colors.black,
+                                      shadowColor: Colors.purpleAccent,
+                                      elevation: 12,
+                                    ).copyWith(
+                                      overlayColor: MaterialStateProperty.all(
+                                        Colors.purple.withOpacity(0.2),
+                                      ),
+                                    ),
+                                child: const Icon(
+                                  Icons.shuffle,
+                                  size: 36,
+                                  color: Colors.purpleAccent,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.purple,
+                                      blurRadius: 10,
+                                      offset: Offset(0, 0),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ElevatedButton(
+                                onPressed: playPreviousSong,
+                                style:
+                                    ElevatedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 10,
+                                      ),
+                                      backgroundColor: Colors.black,
+                                      elevation: 6,
+                                      shadowColor: Colors.blueAccent,
+                                    ).copyWith(
+                                      overlayColor: MaterialStateProperty.all(
+                                        Colors.blue.withOpacity(0.2),
+                                      ),
+                                    ),
+                                child: const Icon(
+                                  Icons.fast_rewind,
+                                  color: Colors.blueAccent,
+                                ),
+                              ),
+                              const SizedBox(width: 20),
+                              ElevatedButton(
+                                onPressed: playNextRandom,
+                                style:
+                                    ElevatedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 10,
+                                      ),
+                                      backgroundColor: Colors.black,
+                                      elevation: 6,
+                                      shadowColor: Colors.orangeAccent,
+                                    ).copyWith(
+                                      overlayColor: MaterialStateProperty.all(
+                                        Colors.orange.withOpacity(0.2),
+                                      ),
+                                    ),
+                                child: const Icon(
+                                  Icons.fast_forward,
+                                  color: Colors.orangeAccent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Divider(),
+
                   Expanded(
                     child: ListView(
                       controller: _scrollController,
