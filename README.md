@@ -1,16 +1,34 @@
-# mp3player
+# 🎧 Juanelo's Music Player — Neon Audio Experience
 
-A new Flutter project.
+Bienvenido a **Juanelo's Music Player**, una app única para Android diseñada con un estilo **futurista retro** y efectos visuales sutiles que te harán sentir como si controlaras tu música desde una consola sci-fi.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 🚀 ¿Qué hace esta app?
 
-A few resources to get you started if this is your first Flutter project:
+🎶 **Reproduce archivos `.mp3`** directamente desde la carpeta estándar `Music` de tu dispositivo Android.  
+🧠 Solo necesitas **llenar tu carpeta con tu música favorita y presionar Play**.  
+🎨 Disfruta de una interfaz con **animaciones ligeras** y un diseño **ciberpunk** que incluye glitch effects, luces pulsantes y controles de estilo neón.  
+📱 No necesitas conexión a Internet. Todo se reproduce **offline**.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## ✨ Características principales
+
+- 🎵 Reproducción de audio fluida con [`just_audio`](https://pub.dev/packages/just_audio)
+- 🔁 Modo aleatorio inteligente
+- ⏮ Botón de retroceso para volver a la canción anterior
+- ⏭ Botón para canción aleatoria siguiente
+- 🎛 Barra de progreso interactiva
+- 👾 Animaciones livianas de glitch y luces pulsantes
+- 📂 Solo necesitas tus archivos `.mp3` en `/storage/emulated/0/Music`
+
+---
+
+## 🛠 Cómo instalar
+
+```bash
+git clone https://github.com/tuusuario/juanelos-music-player.git
+cd juanelos-music-player
+flutter pub get
+flutter run
