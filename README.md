@@ -1,5 +1,9 @@
 # 🎧 Juanelo's Music Player — Neon Audio Experience
 
+![Flutter](https://img.shields.io/badge/Flutter-3.16-blue)
+![License: CC0](https://img.shields.io/badge/license-CC0-green)
+![Status](https://img.shields.io/badge/status-Activo-brightgreen)
+
 Bienvenido a **Juanelo's Music Player**, una app única para Android diseñada con un estilo **futurista retro** y efectos visuales sutiles que te harán sentir como si controlaras tu música desde una consola sci-fi.
 
 ---
