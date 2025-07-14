@@ -289,11 +289,11 @@ class _MusicListScreenState extends State<MusicListScreen> {
                           Text(
                             currentlyPlaying != null
                                 ? currentlyPlaying!
-                                : 'No hay canción en reproducción',
+                                : 'Dale play ...',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: 'PixelBoom',
-                              fontSize: 17,
+                              fontSize: 15,
                               //fontWeight: FontWeight.bold,
                               color: Theme.of(context).primaryColor,
                             ),
@@ -306,7 +306,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
                                 formatDuration(currentPosition),
                                 style: const TextStyle(
                                   color: Colors.cyanAccent,
-                                  fontSize: 12,
+                                  fontSize: 10,
                                   shadows: [
                                     Shadow(
                                       color: Colors.white,
@@ -336,7 +336,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
                                 formatDuration(totalDuration),
                                 style: const TextStyle(
                                   color: Colors.cyanAccent,
-                                  fontSize: 12,
+                                  fontSize: 10,
                                   shadows: [
                                     Shadow(
                                       color: Colors.cyan,
@@ -354,11 +354,11 @@ class _MusicListScreenState extends State<MusicListScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               ElevatedButton(
-                                onPressed: isPlaying ? pauseMusic : null,
+                                onPressed: isPlaying ? pauseMusic : pauseMusic,
                                 style:
                                     ElevatedButton.styleFrom(
-                                      shape: const CircleBorder(),
-                                      padding: const EdgeInsets.all(24),
+                                      shape: const OvalBorder(),
+                                      padding: const EdgeInsets.all(20),
                                       backgroundColor: Colors.black,
                                       shadowColor: Colors.cyanAccent,
                                       elevation: 12,
@@ -369,7 +369,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
                                     ),
                                 child: const Icon(
                                   Icons.pause,
-                                  size: 36,
+                                  size: 30,
                                   color: Colors.cyanAccent,
                                   shadows: [
                                     Shadow(
@@ -380,16 +380,16 @@ class _MusicListScreenState extends State<MusicListScreen> {
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 20),
+                              const SizedBox(width: 40),
                               ElevatedButton(
                                 onPressed:
                                     !isPlaying && currentlyPlaying != null
                                     ? resumeMusic
-                                    : null,
+                                    : startRandomMode,
                                 style:
                                     ElevatedButton.styleFrom(
                                       shape: const CircleBorder(),
-                                      padding: const EdgeInsets.all(24),
+                                      padding: const EdgeInsets.all(20),
                                       backgroundColor: Colors.black,
                                       shadowColor: Colors.greenAccent,
                                       elevation: 12,
@@ -400,7 +400,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
                                     ),
                                 child: const Icon(
                                   Icons.play_arrow,
-                                  size: 36,
+                                  size: 30,
                                   color: Colors.greenAccent,
                                   shadows: [
                                     Shadow(
@@ -411,13 +411,13 @@ class _MusicListScreenState extends State<MusicListScreen> {
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 20),
+                              const SizedBox(width: 40),
                               ElevatedButton(
                                 onPressed: startRandomMode,
                                 style:
                                     ElevatedButton.styleFrom(
                                       shape: const CircleBorder(),
-                                      padding: const EdgeInsets.all(24),
+                                      padding: const EdgeInsets.all(20),
                                       backgroundColor: Colors.black,
                                       shadowColor: Colors.purpleAccent,
                                       elevation: 12,
@@ -428,7 +428,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
                                     ),
                                 child: const Icon(
                                   Icons.shuffle,
-                                  size: 36,
+                                  size: 30,
                                   color: Colors.purpleAccent,
                                   shadows: [
                                     Shadow(
