@@ -25,10 +25,10 @@ class VendingMachineFrame extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: .7),
-          borderRadius: BorderRadius.circular(2),
+          borderRadius: BorderRadius.circular(15),
           border: Border.all(
             color: Colors.cyanAccent.withValues(alpha: .5),
-            width: 1,
+            width: 0,
           ),
         ),
         child: Stack(
@@ -59,6 +59,8 @@ class VendingMachineFrame extends StatelessWidget {
         border: Border(
           top: BorderSide(color: Colors.cyanAccent, width: 2),
           left: BorderSide(color: Colors.cyanAccent, width: 2),
+          bottom: BorderSide(color: Colors.redAccent, width: 2),
+          right: BorderSide(color: Colors.redAccent, width: 2),
         ),
       ),
     );

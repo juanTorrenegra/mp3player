@@ -354,19 +354,14 @@ class _MusicListScreenState extends State<MusicListScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               ElevatedButton(
-                                onPressed: isPlaying ? pauseMusic : pauseMusic,
-                                style:
-                                    ElevatedButton.styleFrom(
-                                      shape: const OvalBorder(),
-                                      padding: const EdgeInsets.all(20),
-                                      backgroundColor: Colors.black,
-                                      shadowColor: Colors.cyanAccent,
-                                      elevation: 12,
-                                    ).copyWith(
-                                      overlayColor: MaterialStateProperty.all(
-                                        Colors.cyan.withOpacity(0.2),
-                                      ),
-                                    ),
+                                onPressed: isPlaying ? pauseMusic : null,
+                                style: ElevatedButton.styleFrom(
+                                  shape: const OvalBorder(),
+                                  padding: const EdgeInsets.all(20),
+                                  backgroundColor: Colors.black,
+                                  shadowColor: Colors.cyanAccent,
+                                  elevation: 12,
+                                ),
                                 child: const Icon(
                                   Icons.pause,
                                   size: 30,
@@ -386,18 +381,13 @@ class _MusicListScreenState extends State<MusicListScreen> {
                                     !isPlaying && currentlyPlaying != null
                                     ? resumeMusic
                                     : startRandomMode,
-                                style:
-                                    ElevatedButton.styleFrom(
-                                      shape: const CircleBorder(),
-                                      padding: const EdgeInsets.all(20),
-                                      backgroundColor: Colors.black,
-                                      shadowColor: Colors.greenAccent,
-                                      elevation: 12,
-                                    ).copyWith(
-                                      overlayColor: MaterialStateProperty.all(
-                                        Colors.green.withValues(alpha: .2),
-                                      ),
-                                    ),
+                                style: ElevatedButton.styleFrom(
+                                  shape: const CircleBorder(),
+                                  padding: const EdgeInsets.all(20),
+                                  backgroundColor: Colors.black,
+                                  shadowColor: Colors.greenAccent,
+                                  elevation: 12,
+                                ),
                                 child: const Icon(
                                   Icons.play_arrow,
                                   size: 30,
