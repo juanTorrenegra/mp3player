@@ -70,8 +70,16 @@ class _MusicListScreenState extends State<MusicListScreen> {
         isPlaying = state.playing;
       });
 
-      if (state.processingState == ProcessingState.completed && isRandomMode) {
-        playRandomSong();
+      // Si la canción termina y no está en modo aleatorio, activarlo
+      if (state.processingState == ProcessingState.completed) {
+        if (!isRandomMode) {
+          setState(() {
+            isRandomMode = true; // Activa el modo aleatorio
+          });
+          playRandomSong(); // Reproduce una canción aleatoria
+        } else {
+          playRandomSong(); // Continúa en modo aleatorio
+        }
       }
     });
 
@@ -280,7 +288,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
                       decoration: BoxDecoration(
                         color: Theme.of(
                           context,
-                        ).secondaryHeaderColor.withOpacity(0.1),
+                        ).secondaryHeaderColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
@@ -328,7 +336,9 @@ class _MusicListScreenState extends State<MusicListScreen> {
                                     await player.seek(position);
                                   },
                                   activeColor: Colors.purple,
-                                  inactiveColor: Colors.purple.withOpacity(0.3),
+                                  inactiveColor: Colors.purple.withValues(
+                                    alpha: 0.3,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 1),

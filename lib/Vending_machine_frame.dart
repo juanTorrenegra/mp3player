@@ -16,7 +16,7 @@ class VendingMachineFrame extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             Colors.cyanAccent.withValues(alpha: .1),
-            Colors.cyanAccent.withValues(alpha: .3),
+            Colors.cyanAccent.withValues(alpha: .5),
             Colors.cyanAccent.withValues(alpha: .1),
           ],
         ),
@@ -25,7 +25,7 @@ class VendingMachineFrame extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: .7),
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: Colors.cyanAccent.withValues(alpha: .5),
             width: 0,
