@@ -260,12 +260,12 @@ class _MusicListScreenState extends State<MusicListScreen> {
         appBar: AppBar(
           centerTitle: true,
           title: const Text(
-            "Juanelo's Music",
+            "Manzana",
             style: TextStyle(
               fontFamily: "cursive",
-              color: Colors.cyanAccent,
+              color: Colors.pinkAccent,
               letterSpacing: 3,
-              fontSize: 15,
+              fontSize: 17,
               shadows: [
                 Shadow(
                   color: Colors.cyan,
@@ -551,7 +551,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
                                 playMusic(path);
                               },
                               trailing: const Icon(
-                                Icons.play_arrow,
+                                Icons.apple_outlined,
                                 color: Colors.cyanAccent,
                               ),
                             ),
