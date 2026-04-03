@@ -59,8 +59,8 @@ class VendingMachineFrame extends StatelessWidget {
         border: Border(
           top: BorderSide(color: Colors.cyanAccent, width: 2),
           left: BorderSide(color: Colors.cyanAccent, width: 2),
-          bottom: BorderSide(color: Colors.redAccent, width: 2),
-          right: BorderSide(color: Colors.redAccent, width: 2),
+          bottom: BorderSide(color: Colors.purple, width: 2),
+          right: BorderSide(color: Colors.purple, width: 2),
         ),
       ),
     );

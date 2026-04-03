@@ -260,12 +260,12 @@ class _MusicListScreenState extends State<MusicListScreen> {
         appBar: AppBar(
           centerTitle: true,
           title: const Text(
-            "Manzana",
+            "reproductor de musica",
             style: TextStyle(
-              fontFamily: "cursive",
-              color: Colors.pinkAccent,
-              letterSpacing: 3,
-              fontSize: 17,
+              fontFamily: "Orbitron",
+              color: Colors.deepPurpleAccent,
+              letterSpacing: 10,
+              fontSize: 12,
               shadows: [
                 Shadow(
                   color: Colors.cyan,
@@ -466,10 +466,10 @@ class _MusicListScreenState extends State<MusicListScreen> {
                                     ),
                                 child: const Icon(
                                   Icons.fast_rewind,
-                                  color: Colors.blueAccent,
+                                  color: Colors.blue,
                                 ),
                               ),
-                              const SizedBox(width: 20),
+                              const SizedBox(width: 40),
                               ElevatedButton(
                                 onPressed: playNextRandom,
                                 style:
@@ -483,15 +483,15 @@ class _MusicListScreenState extends State<MusicListScreen> {
                                       ),
                                       backgroundColor: Colors.black,
                                       elevation: 6,
-                                      shadowColor: Colors.orangeAccent,
+                                      shadowColor: Colors.blueAccent,
                                     ).copyWith(
                                       overlayColor: MaterialStateProperty.all(
-                                        Colors.orange.withOpacity(0.2),
+                                        Colors.blue.withOpacity(0.2),
                                       ),
                                     ),
                                 child: const Icon(
                                   Icons.fast_forward,
-                                  color: Colors.orangeAccent,
+                                  color: Colors.blue,
                                 ),
                               ),
                             ],
