@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AppThemes {
   static final futuristic = ThemeData(
     brightness: Brightness.dark,
-    primaryColor: Color(0xFF00FFCC), // neon cyan
+    primaryColor: Color(0xFF00FFCC), // neon cyann
     secondaryHeaderColor: Color(0xFF4444FF), // deep purple-blue
     fontFamily: 'Orbitron',
     textTheme: const TextTheme(
