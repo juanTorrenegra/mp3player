@@ -21,7 +21,7 @@ class AppThemes {
     brightness: Brightness.light,
     primaryColor: Color(0xFF0033CC), // classic XP blue
     secondaryHeaderColor: Color(0xFFCCCCCC), // light gray
-    fontFamily: 'SegoeUI', // or another retro-looking font
+    fontFamily: 'SegoeUI', // or another retro-looking fontts
     textTheme: const TextTheme(
       bodyLarge: TextStyle(fontFamily: 'SegoeUI'),
       bodyMedium: TextStyle(fontFamily: 'SegoeUI'),
