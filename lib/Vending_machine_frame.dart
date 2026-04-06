@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
 
 class VendingMachineFrame extends StatelessWidget {
   final Widget child;
