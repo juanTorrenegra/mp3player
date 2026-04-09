@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:async';
 import 'package:just_audio/just_audio.dart';
-import 'Vending_machine_frame.dart'; //.
+import 'Vending_machine_frame.dart';
 
 void main() {
   runApp(const MyApp());
