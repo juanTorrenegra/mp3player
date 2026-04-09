@@ -28,7 +28,7 @@ class VendingMachineFrame extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: Colors.cyanAccent.withValues(alpha: .5),
-            width: 0,
+            width: 0, //.
           ),
         ),
         child: Stack(
