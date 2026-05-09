@@ -327,13 +327,13 @@ class _MusicListScreenState extends State<MusicListScreen> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           SizedBox(
-                            height: 22,
+                            height: 66,
                             child: Center(
                               child: Text(
                                 currentlyPlaying != null
                                     ? currentlyPlaying!
                                     : 'Dale play ...',
-                                maxLines: 1,
+                                maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
