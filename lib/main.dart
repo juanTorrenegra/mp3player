@@ -8,7 +8,6 @@ import 'package:just_audio_background/just_audio_background.dart';
 import 'Vending_machine_frame.dart'; //.asd
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
   await JustAudioBackground.init(
     androidNotificationChannelId: 'com.example.mp3player.channel.audio',
     androidNotificationChannelName: 'Juanelo',
@@ -104,6 +103,13 @@ class _MusicListScreenState extends State<MusicListScreen> {
       });
     });
 
+    player.currentIndexStream.listen((index) {
+      if (index == null || index < 0 || index >= musicFiles.length) return;
+      setState(() {
+        currentlyPlaying = musicFiles[index].split('/').last;
+      });
+    });
+
     startAutoScroll();
   }
 
@@ -177,10 +183,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
       });
       return;
     }
-    final notif = await Permission.notification.request();
-    if (!notif.isGranted) {
-      // Playback still works; lock-screen controls need the media notification on Android 13+.
-    }
+    await Permission.notification.request();
     listMusicFiles();
   }
 
@@ -195,14 +198,14 @@ class _MusicListScreenState extends State<MusicListScreen> {
           .map((file) => file.path)
           .toList();
 
-      print("Archivos encontrados: \${mp3Files.length}");
+      debugPrint("Archivos encontrados: \${mp3Files.length}");
 
       setState(() {
         musicFiles = mp3Files;
         loading = false;
       });
     } else {
-      print("Directorio no existe");
+      debugPrint("Directorio no existe");
       setState(() {
         loading = false;
       });
@@ -235,22 +238,17 @@ class _MusicListScreenState extends State<MusicListScreen> {
 
       final index = musicFiles.indexOf(path);
       final safeIndex = index >= 0 ? index : 0;
-      await player.setAudioSource(
-        ConcatenatingAudioSource(
-          children:
-              musicFiles.map((p) => _audioSourceForPath(p)).toList(growable: false),
-        ),
+      setState(() {
+        currentlyPlaying = musicFiles[safeIndex].split('/').last;
+      });
+      await player.setAudioSources(
+        musicFiles.map((p) => _audioSourceForPath(p)).toList(growable: false),
         initialIndex: safeIndex,
         initialPosition: Duration.zero,
       );
       await player.play();
-      player.playerStateStream.firstWhere((state) => state.playing).then((_) {
-        setState(() {
-          currentlyPlaying = path.split('/').last;
-        });
-      });
     } catch (e) {
-      print("Error al reproducir el archivo: \$e");
+      debugPrint("Error al reproducir el archivo: \$e");
     }
   }
 
@@ -466,8 +464,8 @@ class _MusicListScreenState extends State<MusicListScreen> {
                                       shadowColor: Colors.purpleAccent,
                                       elevation: 12,
                                     ).copyWith(
-                                      overlayColor: MaterialStateProperty.all(
-                                        Colors.purple.withOpacity(0.2),
+                                      overlayColor: WidgetStateProperty.all(
+                                        Colors.purple.withValues(alpha: 0.2),
                                       ),
                                     ),
                                 child: const Icon(
@@ -504,8 +502,8 @@ class _MusicListScreenState extends State<MusicListScreen> {
                                       elevation: 6,
                                       shadowColor: Colors.blueAccent,
                                     ).copyWith(
-                                      overlayColor: MaterialStateProperty.all(
-                                        Colors.blue.withOpacity(0.2),
+                                      overlayColor: WidgetStateProperty.all(
+                                        Colors.blue.withValues(alpha: 0.2),
                                       ),
                                     ),
                                 child: const Icon(
@@ -529,8 +527,8 @@ class _MusicListScreenState extends State<MusicListScreen> {
                                       elevation: 6,
                                       shadowColor: Colors.blueAccent,
                                     ).copyWith(
-                                      overlayColor: MaterialStateProperty.all(
-                                        Colors.blue.withOpacity(0.2),
+                                      overlayColor: WidgetStateProperty.all(
+                                        Colors.blue.withValues(alpha: 0.2),
                                       ),
                                     ),
                                 child: const Icon(
@@ -566,7 +564,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.cyanAccent.withOpacity(0.3),
+                                  color: Colors.cyanAccent.withValues(alpha: 0.3),
                                   blurRadius: 8,
                                   spreadRadius: 2,
                                   offset: const Offset(0, 0),
