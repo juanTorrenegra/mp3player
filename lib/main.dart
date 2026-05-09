@@ -4,9 +4,16 @@ import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:async';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'Vending_machine_frame.dart'; //.asd
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await JustAudioBackground.init(
+    androidNotificationChannelId: 'com.example.mp3player.channel.audio',
+    androidNotificationChannelName: 'Juanelo',
+    androidNotificationOngoing: true,
+  );
   runApp(const MyApp());
 }
 
@@ -164,13 +171,17 @@ class _MusicListScreenState extends State<MusicListScreen> {
 
   Future<void> requestPermissionAndListFiles() async {
     var status = await Permission.audio.request();
-    if (status.isGranted) {
-      listMusicFiles();
-    } else {
+    if (status.isDenied || status.isPermanentlyDenied) {
       setState(() {
         loading = false;
       });
+      return;
     }
+    final notif = await Permission.notification.request();
+    if (!notif.isGranted) {
+      // Playback still works; lock-screen controls need the media notification on Android 13+.
+    }
+    listMusicFiles();
   }
 
   void listMusicFiles() async {
@@ -198,8 +209,22 @@ class _MusicListScreenState extends State<MusicListScreen> {
     }
   }
 
+  MediaItem _mediaItemForPath(String path) {
+    final title = path.split('/').last;
+    return MediaItem(
+      id: path,
+      album: 'Music',
+      title: title,
+    );
+  }
+
+  AudioSource _audioSourceForPath(String path) {
+    return AudioSource.uri(Uri.file(path), tag: _mediaItemForPath(path));
+  }
+
   void playMusic(String path) async {
     try {
+      if (musicFiles.isEmpty) return;
       if (currentlyPlaying != null &&
           currentlyPlaying != path.split('/').last) {
         previousSong = musicFiles.firstWhere(
@@ -208,7 +233,16 @@ class _MusicListScreenState extends State<MusicListScreen> {
         );
       }
 
-      await player.setFilePath(path);
+      final index = musicFiles.indexOf(path);
+      final safeIndex = index >= 0 ? index : 0;
+      await player.setAudioSource(
+        ConcatenatingAudioSource(
+          children:
+              musicFiles.map((p) => _audioSourceForPath(p)).toList(growable: false),
+        ),
+        initialIndex: safeIndex,
+        initialPosition: Duration.zero,
+      );
       await player.play();
       player.playerStateStream.firstWhere((state) => state.playing).then((_) {
         setState(() {
@@ -327,8 +361,18 @@ class _MusicListScreenState extends State<MusicListScreen> {
                               const SizedBox(width: 2),
                               Expanded(
                                 child: Slider(
-                                  value: currentPosition.inSeconds.toDouble(),
-                                  max: totalDuration.inSeconds.toDouble(),
+                                  value: currentPosition.inSeconds
+                                      .toDouble()
+                                      .clamp(
+                                        0,
+                                        totalDuration.inSeconds
+                                                .toDouble()
+                                                .clamp(1, double.infinity),
+                                      ),
+                                  max: totalDuration.inSeconds.toDouble().clamp(
+                                    1,
+                                    double.infinity,
+                                  ),
                                   onChanged: (value) async {
                                     final position = Duration(
                                       seconds: value.toInt(),
