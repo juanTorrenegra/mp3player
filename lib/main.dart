@@ -326,16 +326,23 @@ class _MusicListScreenState extends State<MusicListScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text(
-                            currentlyPlaying != null
-                                ? currentlyPlaying!
-                                : 'Dale play ...',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: 'PixelBoom',
-                              fontSize: 15,
-                              //fontWeight: FontWeight.bold,
-                              color: Theme.of(context).primaryColor,
+                          SizedBox(
+                            height: 22,
+                            child: Center(
+                              child: Text(
+                                currentlyPlaying != null
+                                    ? currentlyPlaying!
+                                    : 'Dale play ...',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontFamily: 'PixelBoom',
+                                  fontSize: 15,
+                                  //fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                              ),
                             ),
                           ),
                           const SizedBox(height: 16),
