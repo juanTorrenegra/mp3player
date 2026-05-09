@@ -66,6 +66,11 @@ class _MusicListScreenState extends State<MusicListScreen> {
   Duration currentPosition = Duration.zero;
   Duration totalDuration = Duration.zero;
 
+  String _displayTitleFromPath(String path) {
+    final fileName = path.split('/').last;
+    return fileName.replaceFirst(RegExp(r'\.[^.]+$'), '');
+  }
+
   @override
   void initState() {
     super.initState();
@@ -106,7 +111,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
     player.currentIndexStream.listen((index) {
       if (index == null || index < 0 || index >= musicFiles.length) return;
       setState(() {
-        currentlyPlaying = musicFiles[index].split('/').last;
+        currentlyPlaying = _displayTitleFromPath(musicFiles[index]);
       });
     });
 
@@ -213,7 +218,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
   }
 
   MediaItem _mediaItemForPath(String path) {
-    final title = path.split('/').last;
+    final title = _displayTitleFromPath(path);
     return MediaItem(
       id: path,
       album: 'Music',
@@ -229,9 +234,9 @@ class _MusicListScreenState extends State<MusicListScreen> {
     try {
       if (musicFiles.isEmpty) return;
       if (currentlyPlaying != null &&
-          currentlyPlaying != path.split('/').last) {
+          currentlyPlaying != _displayTitleFromPath(path)) {
         previousSong = musicFiles.firstWhere(
-          (p) => p.endsWith(currentlyPlaying!),
+          (p) => _displayTitleFromPath(p) == currentlyPlaying,
           orElse: () => '',
         );
       }
@@ -239,7 +244,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
       final index = musicFiles.indexOf(path);
       final safeIndex = index >= 0 ? index : 0;
       setState(() {
-        currentlyPlaying = musicFiles[safeIndex].split('/').last;
+        currentlyPlaying = _displayTitleFromPath(musicFiles[safeIndex]);
       });
       await player.setAudioSources(
         musicFiles.map((p) => _audioSourceForPath(p)).toList(growable: false),
@@ -554,7 +559,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
                     child: ListView(
                       controller: _scrollController,
                       children: musicFiles.map((path) {
-                        final fileName = path.split('/').last;
+                        final fileName = _displayTitleFromPath(path);
                         return GestureDetector(
                           onTap: onUserInteraction,
                           child: Container(
@@ -599,10 +604,6 @@ class _MusicListScreenState extends State<MusicListScreen> {
                                 onUserInteraction();
                                 playMusic(path);
                               },
-                              trailing: const Icon(
-                                Icons.apple_outlined,
-                                color: Colors.cyanAccent,
-                              ),
                             ),
                           ),
                         );
