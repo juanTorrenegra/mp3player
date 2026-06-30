@@ -420,7 +420,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
                               ElevatedButton(
                                 onPressed: isPlaying ? pauseMusic : null,
                                 style: ElevatedButton.styleFrom(
-                                  shape: const OvalBorder(),
+                                  shape: const CircleBorder(),
                                   padding: const EdgeInsets.all(20),
                                   backgroundColor: Colors.black,
                                   shadowColor: Colors.cyanAccent,
